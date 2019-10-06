@@ -1,0 +1,139 @@
+////////////////////// BotAIController ///////////////////////////////
+#pragma once
+
+#include "CoreMinimal.h"
+#include "AIController.h"
+#include "BotAIController.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class AICONTROLE_API ABotAIController : public AAIController
+{
+	GENERATED_BODY()
+		
+// informa que iremos fazer uma sobrecarga da função OnPossess herdada 
+	virtual void OnPossess(APawn* InPawn) override;
+
+protected:
+
+	ABotAIController();
+
+public:
+
+// cria variaves para armazenar as referencias para os componentes necessarios
+
+	UPROPERTY(EditDefaultsOnly)
+		class UPawnSensingComponent* PawnSensingComp;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UBehaviorTree* BehaviorTree;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UBehaviorTreeComponent* BehaviorTreeComp;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UBlackboardComponent* BlackboardComp;
+
+// crio uma funcao OnSeePawn passando como referencia um ponteiro da class APawn
+	UFUNCTION()
+	void OnSeePawn(class APawn* SensedPawn);
+};
+
+
+//inicio do cpp
+
+// voce deve criar um Blackboard e BehaviorTree no seu content browser antes de implementar esse codigo
+
+///////// BOT BotAIController.cpp //////////
+
+#include "BotAIController.h"
+#include "Perception/PawnSensingComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "GameFramework/Pawn.h"
+#include "Engine/Engine.h"
+#include "ConstructorHelpers.h"
+// chama o construtor o AI controller
+ABotAIController::ABotAIController() {
+// cria um componente UPawnSensing e set algumas configuraçoes
+	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(FName("PawnSensingComp"));
+  // tempo que o sensing será chamado para dectetar um pawn
+	PawnSensingComp->SensingInterval = 0.25f;
+  // seta o Senging para so detectar Players
+	PawnSensingComp->bOnlySensePlayers = true;
+  // seta a visao periferica do sensing com um angulo de 180
+	PawnSensingComp->SetPeripheralVisionAngle(180.f);
+  // seta o Radius do Sensing para 3000
+	PawnSensingComp->SightRadius = 3000.f;
+  
+// cria um componente UBehaviorTree e coloca ele em nossa variavel de referencia BehaviorTreeComp
+	BehaviorTreeComp = CreateDefaultSubobject<UBehaviorTreeComponent>(FName("BehaviorTreeComp"));
+  
+// cria um componente UBehaviorTree e coloca eçe em nossa variavel de referencia BlackboardComp
+	BlackboardComp = CreateDefaultSubobject<UBlackboardComponent>(FName("BlackboardComp"));
+
+  
+// cria uma referencia 'BtAi' para objeto um UBehaviorTree que voce criou anteriormente 
+// voce consegue essa localizacao do objeto clicando nele no content browser e selecionando copy reference
+
+	ConstructorHelpers::FObjectFinder<UBehaviorTree>BtAi(TEXT("BehaviorTree'/Game/AnimBB/BT_BotAI.BT_BotAI'"));
+
+// verifica se construcao de BtAi foi bem sucedida 
+	if (BtAi.Succeeded())
+	{
+    //seta a BehaviorTree com o BtAi.object
+    BehaviorTree = BtAi.Object;
+	}
+
+
+} //fim do construtor
+
+// faz a sobrecarga da funcao OnPossess herada
+void ABotAIController::OnPossess(APawn * InPawn)
+{
+	Super::OnPossess(InPawn);
+// verifica se BehaviorTree é valido
+	if (BehaviorTree)
+	{
+  //da um starte no Blackboard passando como referencia a BehaviorTree->BlackboardAsset
+  // que deve set setada na BehaviorTree manualmente
+		BlackboardComp->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+  
+  //da um starte no BehaviorTree
+    BehaviorTreeComp->StartTree(*BehaviorTree);
+    
+  //seta o valor de uma key que foi criada na Blackborad com o nome DevoSeguir e valor = false
+  //aqui voce deve set os valores de acordo com a sua necessidade
+		BlackboardComp->SetValueAsObject("DevoSeguir", false);
+
+	}
+  
+  // cria um delegate para a funcao OnseePawn do component PawnSensingComp 
+  //que é chama sempre que um Pawn for detectado pelo Sensing
+  // passamos como referencia a funcao que foi criada OnSeePawn da nossa classe
+  
+	PawnSensingComp->OnSeePawn.AddDynamic(this, &ABotAIController::OnSeePawn);
+	
+}//Fim da funcao OnPossess
+
+
+//Escopo da funcao OnseePawm criada no BotAIController.h
+void ABotAIController::OnSeePawn(APawn * SensedPawn)
+{
+// verifica se o BlackBoard foi setado e se algum Pawn esta sendo detectado
+// voce deve setar o BlackBoard direto na BehaviorTree criada no seu content browser
+    if (BlackboardComp && SensedPawn)
+    {
+      // seta algumas keys criadas no BlackBoard
+      BlackboardComp->SetValueAsObject("Inimigo", SensedPawn);
+      BlackboardComp->SetValueAsBool("DevoSeguir", true);
+
+    }
+
+}// Fim da funcao OnSeePawn
+	
+	
+
