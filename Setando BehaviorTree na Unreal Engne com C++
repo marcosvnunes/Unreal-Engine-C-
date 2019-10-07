@@ -22,7 +22,7 @@ protected:
 
 public:
 
-// cria variaves para armazenar as referencias para os componentes necessarios
+// cria variaveis para armazenar as referencias para os componentes necessarios
 
 	UPROPERTY(EditDefaultsOnly)
 		class UPawnSensingComponent* PawnSensingComp;
@@ -36,7 +36,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 		class UBlackboardComponent* BlackboardComp;
 
-// crio uma funcao OnSeePawn passando como referencia um ponteiro da class APawn
+// cria uma funcao OnSeePawn passando como referencia um ponteiro da class APawn
 	UFUNCTION()
 	void OnSeePawn(class APawn* SensedPawn);
 };
@@ -56,7 +56,9 @@ public:
 #include "GameFramework/Pawn.h"
 #include "Engine/Engine.h"
 #include "ConstructorHelpers.h"
+
 // chama o construtor o AI controller
+
 ABotAIController::ABotAIController() {
 // cria um componente UPawnSensing e set algumas configuraçoes
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(FName("PawnSensingComp"));
@@ -69,10 +71,10 @@ ABotAIController::ABotAIController() {
   // seta o Radius do Sensing para 3000
 	PawnSensingComp->SightRadius = 3000.f;
   
-// cria um componente UBehaviorTree e coloca ele em nossa variavel de referencia BehaviorTreeComp
+// cria um componente UBehaviorTree e coloca em nossa variavel de referencia BehaviorTreeComp
 	BehaviorTreeComp = CreateDefaultSubobject<UBehaviorTreeComponent>(FName("BehaviorTreeComp"));
   
-// cria um componente UBehaviorTree e coloca eçe em nossa variavel de referencia BlackboardComp
+// cria um componente UBehaviorTree e coloca em nossa variavel de referencia BlackboardComp
 	BlackboardComp = CreateDefaultSubobject<UBlackboardComponent>(FName("BlackboardComp"));
 
   
@@ -98,7 +100,7 @@ void ABotAIController::OnPossess(APawn * InPawn)
 // verifica se BehaviorTree é valido
 	if (BehaviorTree)
 	{
-  //da um starte no Blackboard passando como referencia a BehaviorTree->BlackboardAsset
+  //da um starte no Blackboard passando como referencia a *BehaviorTree->BlackboardAsset
   // que deve set setada na BehaviorTree manualmente
 		BlackboardComp->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
   
